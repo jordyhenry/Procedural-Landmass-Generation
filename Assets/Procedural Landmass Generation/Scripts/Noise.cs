@@ -10,7 +10,7 @@ public static class Noise
 		//PseudoRandomNumberGeneration
 		System.Random prng = new System.Random(seed);
 		
-		//This are used to implement our seed to the map, and to add our custom offset, this way we can scroll the noise
+		//This are used to implement our seed on the map, and to add our custom offset, this way we can scroll the noise
 		Vector2[] octavesOffsets = new Vector2[octaves];
 		for(int i = 0; i < octaves; i++){
 			float offsetX = prng.Next(-100000, 100000) + offset.x;
