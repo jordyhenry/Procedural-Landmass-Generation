@@ -9,7 +9,7 @@ public class MapGenerator : MonoBehaviour
 	//The max of vertex per Mesh that Unity allows is 255²
 	//but 241, when in the formula is divisible by 1, 2, 4, 8, 10, 12
 	//which gives us a good range for mesh simplification
-	const int mapChunkSize = 241;
+	public const int mapChunkSize = 241;
 	[Range(0, 6)]
 	public int levelOfDetail;
 	public float noiseScale;
