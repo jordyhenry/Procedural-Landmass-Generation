@@ -9,6 +9,8 @@ public class MapGenerator : MonoBehaviour
 	public enum DrawMode { NoiseMap, ColorMap, Mesh };
 	public DrawMode drawMode;
 
+    public Noise.NormalizeMode normalizeMode;
+
 	//The max of vertex per Mesh that Unity allows is 255²
 	//but 241, when in the formula is divisible by 1, 2, 4, 8, 10, 12
 	//which gives us a good range for mesh simplification
@@ -51,7 +53,7 @@ public class MapGenerator : MonoBehaviour
 
 	private MapData GenerateMapData(Vector2 center)
 	{
-		float [,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, center + offset);
+		float [,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, center + offset, normalizeMode);
 
 		Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
 		for(int y = 0; y < mapChunkSize; y++){
@@ -59,10 +61,13 @@ public class MapGenerator : MonoBehaviour
 				float currentHeight = noiseMap[x,y];
 				
 				for(int i = 0; i < regions.Length; i++){
-					if(currentHeight <= regions[i].height){
+					if(currentHeight >= regions[i].height){
 						colorMap[y * mapChunkSize + x] = regions[i].color;
-						break;
-					}
+                    }
+                    else
+                    {
+                        break;
+                    }
 				}
 			}
 		}
