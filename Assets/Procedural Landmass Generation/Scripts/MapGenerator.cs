@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 public class MapGenerator : MonoBehaviour 
 {
-	public enum DrawMode { NoiseMap, ColorMap, Mesh };
+	public enum DrawMode { NoiseMap, ColorMap, Mesh, Falloff };
 	public DrawMode drawMode;
 
     public Noise.NormalizeMode normalizeMode;
@@ -25,6 +25,7 @@ public class MapGenerator : MonoBehaviour
 	public float lacunarity;
 	public int seed;
 	public Vector2 offset;
+    public bool useFalloff;
 	public float meshHeightMultiplier;
 	public AnimationCurve meshHeightCurve;
 
@@ -32,23 +33,32 @@ public class MapGenerator : MonoBehaviour
 
 	public TerrainType[] regions;
 
+    float[,] falloffMap;
+
 	private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQeue = new Queue<MapThreadInfo<MapData>>();
 	private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQeue = new Queue<MapThreadInfo<MeshData>>();
 
-	public void DrawMapInEditor()
+    private void Awake()
+    {
+        falloffMap = FalloffGenerator.GenerateFallofMap(mapChunkSize);
+    }
+
+    public void DrawMapInEditor()
 	{
 		MapData mapData = GenerateMapData(Vector2.zero);
 		MapDisplay display = FindObjectOfType<MapDisplay>();
-		
-		if (drawMode == DrawMode.NoiseMap)
-			display.DrawTexture(TextureGenerator.TextureFromHeightMap(mapData.heightMap));
-		else if (drawMode == DrawMode.ColorMap)
-			display.DrawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
-		else if (drawMode == DrawMode.Mesh){
-			MeshData meshData = MeshGenerator.GenerateTerrainMeshData(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLevelOfDetail);
-			Texture2D texture = TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize);
-			display.DrawMesh(meshData, texture);	
-		}
+
+        if (drawMode == DrawMode.NoiseMap)
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(mapData.heightMap));
+        else if (drawMode == DrawMode.ColorMap)
+            display.DrawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+        else if (drawMode == DrawMode.Mesh) {
+            MeshData meshData = MeshGenerator.GenerateTerrainMeshData(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLevelOfDetail);
+            Texture2D texture = TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize);
+            display.DrawMesh(meshData, texture);
+        } else if (drawMode == DrawMode.Falloff) {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(falloffMap));
+        }
 	}
 
 	private MapData GenerateMapData(Vector2 center)
@@ -58,6 +68,10 @@ public class MapGenerator : MonoBehaviour
 		Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
 		for(int y = 0; y < mapChunkSize; y++){
 			for(int x = 0; x < mapChunkSize; x++){
+                if (useFalloff)
+                {
+                    noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
+                }
 				float currentHeight = noiseMap[x,y];
 				
 				for(int i = 0; i < regions.Length; i++){
@@ -82,7 +96,9 @@ public class MapGenerator : MonoBehaviour
 		
 		if(octaves < 0)
 			octaves = 0;
-	}
+
+        falloffMap = FalloffGenerator.GenerateFallofMap(mapChunkSize);
+    }
 
 	#region THREADING IMPLEMENTATION
 	private void Update() 
