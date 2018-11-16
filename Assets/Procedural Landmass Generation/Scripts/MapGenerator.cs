@@ -14,7 +14,9 @@ public class MapGenerator : MonoBehaviour
 	//The max of vertex per Mesh that Unity allows is 255²
 	//but 241, when in the formula is divisible by 1, 2, 4, 8, 10, 12
 	//which gives us a good range for mesh simplification
-	public const int mapChunkSize = 241;
+
+    //Compensate the 2 for the borderMesh calculation
+	public const int mapChunkSize = 239;
 	[Range(0, 6)]
 	public int editorPreviewLevelOfDetail;
 	public float noiseScale;
@@ -63,7 +65,7 @@ public class MapGenerator : MonoBehaviour
 
 	private MapData GenerateMapData(Vector2 center)
 	{
-		float [,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, center + offset, normalizeMode);
+		float [,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize + 2, mapChunkSize + 2, seed, noiseScale, octaves, persistance, lacunarity, center + offset, normalizeMode);
 
 		Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
 		for(int y = 0; y < mapChunkSize; y++){

@@ -4,44 +4,72 @@ public static class MeshGenerator
 {
 	public static MeshData GenerateTerrainMeshData(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail)
 	{
-		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys); 
-		int width = heightMap.GetLength(0);
-		int height = heightMap.GetLength(1);
+		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
+
+        int meshSimplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
+
+        int borderedSize = heightMap.GetLength(0);
+        int meshSize = borderedSize - 2 * meshSimplificationIncrement;
+        int meshSizeUnsimplified = borderedSize - 2;
 
 		//Used to set the pivot of the mesh in the center
 		//otherwise it will be at bottom left
-		float topLeftX = (width - 1) / -2f;
-		float topLeftZ = (height - 1) / 2f;
+		float topLeftX = (meshSizeUnsimplified - 1) / -2f;
+		float topLeftZ = (meshSizeUnsimplified - 1) / 2f;
 
-		int meshSimplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
-		int verticesPerLine = (width - 1) / meshSimplificationIncrement + 1;	
-
-		MeshData meshData = new MeshData(verticesPerLine, verticesPerLine);
-		int vertexIndex = 0;
 		
-		for (int y = 0; y < height; y += meshSimplificationIncrement)
+		int verticesPerLine = (meshSize - 1) / meshSimplificationIncrement + 1;	
+
+		MeshData meshData = new MeshData(verticesPerLine);
+
+        int[,] vertexIndicesMap = new int[borderedSize, borderedSize];
+        int meshVertexIndex = 0;
+        int borderVertexIndex = -1;
+
+
+
+        for (int y = 0; y < borderedSize; y += meshSimplificationIncrement)
+        {
+            for (int x = 0; x < borderedSize; x += meshSimplificationIncrement)
+            {
+                bool isBorderVertex = (y == 0) || (y == borderedSize - 1) || (x == 0) || (x == borderedSize - 1);
+
+                if (isBorderVertex)
+                {
+                    vertexIndicesMap[x, y] = borderVertexIndex;
+                    borderVertexIndex--;
+                }
+                else
+                {
+                    vertexIndicesMap[x, y] = meshVertexIndex;
+                    meshVertexIndex++; 
+                }
+            }
+        }
+
+		for (int y = 0; y < borderedSize; y += meshSimplificationIncrement)
 		{
-			for (int x = 0; x < width; x += meshSimplificationIncrement)
+			for (int x = 0; x < borderedSize; x += meshSimplificationIncrement)
 			{
-				float yHeight = heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier;
-				meshData.vertices [vertexIndex] = new Vector3(topLeftX + x, yHeight, topLeftZ - y);	
-				meshData.uvs [vertexIndex] = new Vector2(x / (float)width, y / (float)height);
+                int vertexIndex = vertexIndicesMap[x, y];
+				Vector2 percent = new Vector2((x - meshSimplificationIncrement) / (float)meshSize, (y - meshSimplificationIncrement) / (float)meshSize);
+
+                float yHeight = heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier;
+                Vector3 vertexPosition = new Vector3(topLeftX + percent.x * meshSizeUnsimplified, yHeight, topLeftZ - percent.y * meshSizeUnsimplified);
+
+
+                meshData.AddVertex(vertexPosition, percent, vertexIndex);
 
 				//When generating triangles for the mesh, we dont need to use the right 
 				//neither the bottom edges
-				if(x < width - 1 && y < height - 1)
+				if(x < borderedSize - 1 && y < borderedSize - 1)
 				{
-					//The index of the current vertex
-					int a = vertexIndex;
-					//The right neighbour of the vertex 'a'
-					int b = vertexIndex + 1;
-					//The vertex below 'a', wee add 'width' in this case, cause we need to map 'heightMap'
-					//into a 1D array
-					int c = vertexIndex + verticesPerLine;
-					//The right neighbour of the vertex 'c'
-					int d = vertexIndex + verticesPerLine + 1;
+					int a = vertexIndicesMap[x, y];
+					int b = vertexIndicesMap[x + meshSimplificationIncrement, y];
+                    int c = vertexIndicesMap[x, y + meshSimplificationIncrement];
+                    int d = vertexIndicesMap[x + meshSimplificationIncrement, y + meshSimplificationIncrement];
 
-					meshData.AddTriangle(a, d, c);
+                    meshData.AddTriangle(a, d, c);
 					meshData.AddTriangle(d, a, b);
 				}
 
