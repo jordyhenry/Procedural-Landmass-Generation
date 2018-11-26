@@ -76,6 +76,9 @@ public static class MeshGenerator
 				vertexIndex ++;
 			}
 		}
+
+        meshData.BakeNormals();
+
 		return meshData;
 	}
 }
