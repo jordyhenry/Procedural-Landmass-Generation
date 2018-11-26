@@ -2,7 +2,7 @@
 
 public static class MeshGenerator 
 {
-	public static MeshData GenerateTerrainMeshData(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail)
+	public static MeshData GenerateTerrainMeshData(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
 	{
 		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
 
@@ -20,7 +20,7 @@ public static class MeshGenerator
 		
 		int verticesPerLine = (meshSize - 1) / meshSimplificationIncrement + 1;	
 
-		MeshData meshData = new MeshData(verticesPerLine);
+		MeshData meshData = new MeshData(verticesPerLine, useFlatShading);
 
         int[,] vertexIndicesMap = new int[borderedSize, borderedSize];
         int meshVertexIndex = 0;
@@ -77,7 +77,7 @@ public static class MeshGenerator
 			}
 		}
 
-        meshData.BakeNormals();
+        meshData.Finalize();
 
 		return meshData;
 	}

@@ -11,13 +11,26 @@ public class MapGenerator : MonoBehaviour
 
     public Noise.NormalizeMode normalizeMode;
 
-	//The max of vertex per Mesh that Unity allows is 255²
-	//but 241, when in the formula is divisible by 1, 2, 4, 8, 10, 12
-	//which gives us a good range for mesh simplification
+    //The max of vertex per Mesh that Unity allows is 255²
+    //but 241, when in the formula is divisible by 1, 2, 4, 8, 10, 12
+    //which gives us a good range for mesh simplification
+
+    public bool useFlatShading;
 
     //Compensate the 2 for the borderMesh calculation
-	public const int mapChunkSize = 239;
-	[Range(0, 6)]
+    public static int mapChunkSize {
+        get
+        {
+            if (instance == null)
+                instance = FindObjectOfType<MapGenerator>();
+
+            if (instance.useFlatShading)
+                return 95;
+            else
+                return 239;
+        }
+    }
+    [Range(0, 6)]
 	public int editorPreviewLevelOfDetail;
 	public float noiseScale;
 
@@ -37,6 +50,8 @@ public class MapGenerator : MonoBehaviour
 
     float[,] falloffMap;
 
+    static MapGenerator instance;
+
 	private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQeue = new Queue<MapThreadInfo<MapData>>();
 	private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQeue = new Queue<MapThreadInfo<MeshData>>();
 
@@ -55,7 +70,7 @@ public class MapGenerator : MonoBehaviour
         else if (drawMode == DrawMode.ColorMap)
             display.DrawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         else if (drawMode == DrawMode.Mesh) {
-            MeshData meshData = MeshGenerator.GenerateTerrainMeshData(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLevelOfDetail);
+            MeshData meshData = MeshGenerator.GenerateTerrainMeshData(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLevelOfDetail, useFlatShading);
             Texture2D texture = TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize);
             display.DrawMesh(meshData, texture);
         } else if (drawMode == DrawMode.Falloff) {
@@ -153,7 +168,7 @@ public class MapGenerator : MonoBehaviour
 
 	private void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback)
 	{
-		MeshData meshData = MeshGenerator.GenerateTerrainMeshData(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
+		MeshData meshData = MeshGenerator.GenerateTerrainMeshData(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod, useFlatShading);
 		lock(meshDataThreadInfoQeue) {
 			meshDataThreadInfoQeue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
 		}
