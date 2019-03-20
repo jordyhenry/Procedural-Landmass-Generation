@@ -2,17 +2,11 @@
 
 public static class MeshGenerator 
 {
-    public const int numberOfSupportedLODs = 5;
-    public const int numberOfSupportedChunckSizes = 9;
-    public const int numberOfSupportedFlatShadedChunckSizes = 3;
-    public static readonly int[] supportedChunckSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240 };
-    public static readonly int[] supportedFlatShadedChunckSizes = { 48, 72, 96 };
+    
 
-    public static MeshData GenerateTerrainMeshData(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
+    public static MeshData GenerateTerrainMeshData(float[,] heightMap, MeshSettings meshSettings, int levelOfDetail)
 	{
-		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
-
-        int meshSimplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
+		int meshSimplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
 
         int borderedSize = heightMap.GetLength(0);
         int meshSize = borderedSize - 2 * meshSimplificationIncrement;
@@ -26,7 +20,7 @@ public static class MeshGenerator
 		
 		int verticesPerLine = (meshSize - 1) / meshSimplificationIncrement + 1;	
 
-		MeshData meshData = new MeshData(verticesPerLine, useFlatShading);
+		MeshData meshData = new MeshData(verticesPerLine, meshSettings.useFlatShading);
 
         int[,] vertexIndicesMap = new int[borderedSize, borderedSize];
         int meshVertexIndex = 0;
@@ -60,8 +54,8 @@ public static class MeshGenerator
                 int vertexIndex = vertexIndicesMap[x, y];
 				Vector2 percent = new Vector2((x - meshSimplificationIncrement) / (float)meshSize, (y - meshSimplificationIncrement) / (float)meshSize);
 
-                float yHeight = heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier;
-                Vector3 vertexPosition = new Vector3(topLeftX + percent.x * meshSizeUnsimplified, yHeight, topLeftZ - percent.y * meshSizeUnsimplified);
+                float yHeight = heightMap[x, y];
+                Vector3 vertexPosition = new Vector3((topLeftX + percent.x * meshSizeUnsimplified) * meshSettings.meshScale, yHeight, (topLeftZ - percent.y * meshSizeUnsimplified) * meshSettings.meshScale);
 
 
                 meshData.AddVertex(vertexPosition, percent, vertexIndex);
