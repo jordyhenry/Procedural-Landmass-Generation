@@ -2,7 +2,13 @@
 
 public static class MeshGenerator 
 {
-	public static MeshData GenerateTerrainMeshData(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
+    public const int numberOfSupportedLODs = 5;
+    public const int numberOfSupportedChunckSizes = 9;
+    public const int numberOfSupportedFlatShadedChunckSizes = 3;
+    public static readonly int[] supportedChunckSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240 };
+    public static readonly int[] supportedFlatShadedChunckSizes = { 48, 72, 96 };
+
+    public static MeshData GenerateTerrainMeshData(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
 	{
 		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
 

@@ -15,6 +15,12 @@ public class MapGenerator : MonoBehaviour
 
     public Material terrainMaterial;
 
+    [Range(0, MeshGenerator.numberOfSupportedChunckSizes - 1)]
+    public int chunckSizeIndex;
+
+    [Range(0, MeshGenerator.numberOfSupportedFlatShadedChunckSizes - 1)]
+    public int flatShadedChunckSizeIndex;
+
     /*
     The max of vertex per Mesh that Unity allows is 255²
     but 241, when in the formula is divisible by 1, 2, 4, 8, 10, 12
@@ -25,12 +31,12 @@ public class MapGenerator : MonoBehaviour
         get
         {
             if (terrainData.useFlatShading)
-                return 95;
+                return MeshGenerator.supportedFlatShadedChunckSizes[flatShadedChunckSizeIndex] - 1;
             else
-                return 239;
+                return MeshGenerator.supportedChunckSizes[chunckSizeIndex] - 1;
         }
     }
-    [Range(0, 6)]
+    [Range(0, MeshGenerator.numberOfSupportedLODs - 1)]
 	public int editorPreviewLevelOfDetail;
 	public bool autoUpdate;
 
@@ -38,7 +44,13 @@ public class MapGenerator : MonoBehaviour
 
 	private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQeue = new Queue<MapThreadInfo<MapData>>();
 	private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQeue = new Queue<MapThreadInfo<MeshData>>();
-    
+
+    private void Awake()
+    {
+        textureData.ApplyToMaterial(terrainMaterial);
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+    }
+
     void OnValuesUpdated()
     {
         if(!Application.isPlaying)
@@ -54,7 +66,8 @@ public class MapGenerator : MonoBehaviour
 
     public void DrawMapInEditor()
 	{
-		MapData mapData = GenerateMapData(Vector2.zero);
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+        MapData mapData = GenerateMapData(Vector2.zero);
 		MapDisplay display = FindObjectOfType<MapDisplay>();
 
         if (drawMode == DrawMode.NoiseMap)
@@ -85,8 +98,6 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
-
-        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
 
 		return new MapData(noiseMap);
 	}
@@ -136,7 +147,8 @@ public class MapGenerator : MonoBehaviour
 
 	public void RequestMapData(Vector2 center, Action<MapData> callback)
 	{
-		ThreadStart threadStart = delegate {
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+        ThreadStart threadStart = delegate {
 			MapDataThread(center, callback);
 		};
 
