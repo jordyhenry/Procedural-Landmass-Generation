@@ -15,10 +15,10 @@ public static class TextureGenerator
 		return texture;
 	}
 
-	public static Texture2D TextureFromHeightMap(float[,] heightMap)
+	public static Texture2D TextureFromHeightMap(HeightMap heightMap)
 	{
-		int width = heightMap.GetLength(0);
-		int height = heightMap.GetLength(1);
+        int width = heightMap.values. GetLength(0);
+		int height = heightMap.values.GetLength(1);
 
 		Color[] colorMap = new Color[width * height];
 
@@ -26,7 +26,7 @@ public static class TextureGenerator
 			for(int x = 0; x < width; x++){
 				//Finding the correpondent position of a 2d array value on a 1d array
 				int index = y * width + x;
-				colorMap[index] = Color.Lerp(Color.black, Color.white, heightMap[x, y]);
+				colorMap[index] = Color.Lerp(Color.black, Color.white, Mathf.InverseLerp(heightMap.minValue, heightMap.maxValue, heightMap.values[x, y]));
 			}
 		}
 		
