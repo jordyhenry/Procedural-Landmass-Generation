@@ -75,7 +75,7 @@ public static class Noise
 
                 if (settings.normalizeMode == NormalizeMode.GLOBAL)
                 {
-                    float normalizedHeight = noiseMap[x, y] + 1f / (maxPossibleHeight / .9f);
+                    float normalizedHeight = (noiseMap[x, y] + 1f) / (maxPossibleHeight / .9f);
                     noiseMap[x, y] = Mathf.Clamp(normalizedHeight, 0, int.MaxValue);
                 }
             }
